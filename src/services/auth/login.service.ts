@@ -33,6 +33,21 @@ export const loginService = async (body: Pick<IUser, "email" | "password">) => {
     }
 
     if (
+      user.accountStatus === "Suspended" &&
+      user.suspendedUntil &&
+      user.suspendedUntil <= new Date()
+    ) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          accountStatus: "Active",
+          suspendedUntil: null,
+          loginAttempts: 0,
+        },
+      });
+    }
+
+    if (
       user.loginAttempts >= MAX_LOGIN_ATTEMPTS &&
       user.accountStatus !== "Suspended"
     ) {
